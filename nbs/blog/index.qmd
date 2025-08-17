@@ -1,0 +1,12 @@
+---
+title: Work Logs & Wandering Thoughts
+subtitle: Simple notes from work and life, nothing fancy
+listing:
+  sort: "date desc"
+  contents: "posts"
+  sort-ui: false
+  filter-ui: false
+  categories: true
+  feed: true
+page-layout: full
+---
