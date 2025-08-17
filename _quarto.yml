@@ -1,0 +1,20 @@
+project:
+  type: website
+  preview:
+    port: 3000
+    browser: false
+
+website:
+  title: "Author"
+  navbar:
+    right:
+      - about.qmd
+      - icon: github
+        href: https://github.com/vauthor31
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+
+
+

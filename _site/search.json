@@ -1,0 +1,44 @@
+[
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "I’m Author, an EECS student at National Yang Ming Chiao Tung University, working on robotics research in the HCIS lab. This blog is basically my notebook for work, ideas, and the occasional brain dump"
+  },
+  {
+    "objectID": "posts/welcome/index.html",
+    "href": "posts/welcome/index.html",
+    "title": "Isaac Gym Segmentation Fault",
+    "section": "",
+    "text": "Description: Segmentation fault caught when launching Isaac Gym inside docker container\nThe reason of segmentation fault is the container could not use the RTX graphic card to render led to segmentation fault when loading Isaac Gym’s viewer\nInspected log:\n\nCreating 36 environments\nAnimating DOF 0 ('abdomen_z')\nUnhandled descriptor set 433\nUnhandled descriptor set 414286096\nUnhandled descriptor set 431466320\nSegmentation fault (core dumped)\nInside the container, inspect the renderer\nvulkaninfo --json |grep \"deviceName\"\n\n# Output:\ndeviceName : llvmpipe (LLVM 12.0.0, 256 bits)   ⟵ software renderer\nllvmpipe means Vulkan has fallen back to CPU rasterization because it cannot find a valid NVIDIA driver.\n\nThe container cannot see NVIDIA’s Vulkan ICD manifest (nvidia_icd.json) and/or the matching driver libraries, so the Vulkan loader skips the GPU and uses the software fallback; Isaac Gym crashes when it tries to create GPU-only resources.\nCause: Incorrect mount command is -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0), see the following lines:\n#!/bin/bash\nset -e\nset -u\n\n# --- IMPORTANT ---\n# Replace :0 with the value you found in Step 1\nexport DISPLAY=:1\n\necho \"Setting display to $DISPLAY\"\n\n# Temporarily allow local connections from Docker to the X server\nxhost +local:\n\n# Run the Docker container\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all \\\n  -e DISPLAY=$DISPLAY \\\n  -v /tmp/.X11-unix:/tmp/.X11-unix \\\n  -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:/usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:ro \\ &lt;----- HERE\n  -v /usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:/usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:ro \\\n  -v .:/agentic_robot_assembly \\\n  --network=host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\n# Revert xhost settings\necho \"Restoring display access control\"\nxhost -local:\n\nIt was mounted incorrect nvidia driver version 550, this would fail if the host machine is using Nvidia driver version orther 550.\n\nSolution: Mount only the Vulkan ICD Here is the updated run.sh:\n\n#!/usr/bin/env bash\nset -euo pipefail\n\n: \"${DISPLAY:=:1}\"\nexport DISPLAY\necho \"[run.sh] DISPLAY=$DISPLAY\"\n\n###############################################################################\nif   [ -f /usr/share/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/usr/share/vulkan/icd.d\nelif [ -f /etc/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/etc/vulkan/icd.d\nelse\n      echo \"[run.sh] ERROR: nvidia_icd.json not found on host.\" &gt;&2\n      exit 1\nfi\necho \"[run.sh] Using Vulkan ICD dir $ICD_DIR\"\n\nVOLS=(-v /tmp/.X11-unix:/tmp/.X11-unix          # X socket\n      -v \"$ICD_DIR:$ICD_DIR:ro\"                # Vulkan ICD JSON\n      -v \"$(pwd)\":/agentic_robot_assembly)     # 專案\n\nENV_VARS=(-e DISPLAY=\"$DISPLAY\"\n          -e VK_ICD_FILENAMES=\"$ICD_DIR/nvidia_icd.json\")\n\nxhost +local: 1&gt;/dev/null\n\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all,graphics,display,utility,compute \\\n  \"${ENV_VARS[@]}\" \\\n  \"${VOLS[@]}\" \\\n  --network host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\nxhost -local: 1&gt;/dev/null"
+  },
+  {
+    "objectID": "posts/post-with-code/index.html",
+    "href": "posts/post-with-code/index.html",
+    "title": "Post With Code",
+    "section": "",
+    "text": "This is a post with executable code."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Simple notes from work and life, nothing fancy",
+    "section": "",
+    "text": "Isaac Gym Segmentation Fault\n\n\n\nbug_log\n\n\n\n\n\n\n\n\n\nAug 17, 2025\n\n\nauthor\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "posts/welcome/index.html#adsasd",
+    "href": "posts/welcome/index.html#adsasd",
+    "title": "Welcome To My Blog",
+    "section": "",
+    "text": "This is the first post in a Quarto blog. Welcome!\n\nSince this post doesn’t specify an explicit image, the first image in the post will be used in the listing page of posts."
+  },
+  {
+    "objectID": "posts/2025-08-17-Segmentation-fault-caught/index.html",
+    "href": "posts/2025-08-17-Segmentation-fault-caught/index.html",
+    "title": "Isaac Gym Segmentation Fault",
+    "section": "",
+    "text": "Description: Segmentation fault caught when launching Isaac Gym inside docker container\nThe reason of segmentation fault is the container could not use the RTX graphic card to render led to segmentation fault when loading Isaac Gym’s viewer\nInspected log:\n\nCreating 36 environments\nAnimating DOF 0 ('abdomen_z')\nUnhandled descriptor set 433\nUnhandled descriptor set 414286096\nUnhandled descriptor set 431466320\nSegmentation fault (core dumped)\nInside the container, inspect the renderer\nvulkaninfo --json |grep \"deviceName\"\n\n# Output:\ndeviceName : llvmpipe (LLVM 12.0.0, 256 bits)   ⟵ software renderer\nllvmpipe means Vulkan has fallen back to CPU rasterization because it cannot find a valid NVIDIA driver.\n\nThe container cannot see NVIDIA’s Vulkan ICD manifest (nvidia_icd.json) and/or the matching driver libraries, so the Vulkan loader skips the GPU and uses the software fallback; Isaac Gym crashes when it tries to create GPU-only resources.\nCause: Incorrect mount command is -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0), see the following lines:\n#!/bin/bash\nset -e\nset -u\n\n# --- IMPORTANT ---\n# Replace :0 with the value you found in Step 1\nexport DISPLAY=:1\n\necho \"Setting display to $DISPLAY\"\n\n# Temporarily allow local connections from Docker to the X server\nxhost +local:\n\n# Run the Docker container\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all \\\n  -e DISPLAY=$DISPLAY \\\n  -v /tmp/.X11-unix:/tmp/.X11-unix \\\n  -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:/usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:ro \\ &lt;----- HERE\n  -v /usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:/usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:ro \\\n  -v .:/agentic_robot_assembly \\\n  --network=host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\n# Revert xhost settings\necho \"Restoring display access control\"\nxhost -local:\n\nIt was mounted incorrect nvidia driver version 550, this would fail if the host machine is using Nvidia driver version orther 550.\n\nSolution: Mount only the Vulkan ICD Here is the updated run.sh:\n\n#!/usr/bin/env bash\nset -euo pipefail\n\n: \"${DISPLAY:=:1}\"\nexport DISPLAY\necho \"[run.sh] DISPLAY=$DISPLAY\"\n\n###############################################################################\nif   [ -f /usr/share/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/usr/share/vulkan/icd.d\nelif [ -f /etc/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/etc/vulkan/icd.d\nelse\n      echo \"[run.sh] ERROR: nvidia_icd.json not found on host.\" &gt;&2\n      exit 1\nfi\necho \"[run.sh] Using Vulkan ICD dir $ICD_DIR\"\n\nVOLS=(-v /tmp/.X11-unix:/tmp/.X11-unix          # X socket\n      -v \"$ICD_DIR:$ICD_DIR:ro\"                # Vulkan ICD JSON\n      -v \"$(pwd)\":/agentic_robot_assembly)     # 專案\n\nENV_VARS=(-e DISPLAY=\"$DISPLAY\"\n          -e VK_ICD_FILENAMES=\"$ICD_DIR/nvidia_icd.json\")\n\nxhost +local: 1&gt;/dev/null\n\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all,graphics,display,utility,compute \\\n  \"${ENV_VARS[@]}\" \\\n  \"${VOLS[@]}\" \\\n  --network host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\nxhost -local: 1&gt;/dev/null"
+  }
+]

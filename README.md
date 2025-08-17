@@ -1,2 +1,0 @@
-# Blog
-I’m Author, an EECS student at National Yang Ming Chiao Tung University, working on robotics research in the [HCIS](https://sites.google.com/site/yitingchen0524/hcis-lab) lab. This blog is basically my notebook for work, ideas, and the occasional brain dump
