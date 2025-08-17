@@ -2,7 +2,7 @@ project:
   output-dir: _docs
 
 website:
-  title: "my-personal-blog"
+  title: "Author's Blog"
   site-url: "https://author31.github.io/my-personal-blog"
   description: "This blog’s where I keep track of what I’m working on and the thoughts that come with it."
   repo-branch: master
