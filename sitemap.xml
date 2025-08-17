@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://author31.github.io/my-personal-blog/blog/index.html</loc>
-    <lastmod>2025-08-17T10:25:13.130Z</lastmod>
-  </url>
-  <url>
     <loc>https://author31.github.io/my-personal-blog/index.html</loc>
-    <lastmod>2025-08-17T10:25:32.429Z</lastmod>
+    <lastmod>2025-08-17T13:39:54.878Z</lastmod>
   </url>
   <url>
-    <loc>https://author31.github.io/my-personal-blog/blog/posts/2025-08-15-Introduction/index.html</loc>
-    <lastmod>2025-08-17T10:25:32.526Z</lastmod>
+    <loc>https://author31.github.io/my-personal-blog/posts/2025-08-17-Segmentation-fault-caught/index.html</loc>
+    <lastmod>2025-08-17T13:39:54.878Z</lastmod>
+  </url>
+  <url>
+    <loc>https://author31.github.io/my-personal-blog/about.html</loc>
+    <lastmod>2025-08-17T13:39:54.878Z</lastmod>
   </url>
 </urlset>
