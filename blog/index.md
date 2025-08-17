@@ -1,0 +1,3 @@
+# Work Logs & Wandering Thoughts
+
+
