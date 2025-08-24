@@ -4,7 +4,7 @@ author: "author"
 date: "2025-08-24"
 categories: [development_log]
 ---
-![](https://www.blender.org/wp-content/uploads/2025/03/splash.webp)
+![](blender_thumbnail.webp)
 
 Repository URL: [multi-agent-scene-simulator](https://github.com/author31/multi-agent-scene-simulator)
 
