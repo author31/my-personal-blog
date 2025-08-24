@@ -6,8 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="author">
+<meta name="dcterms.date" content="2025-08-24">
 
-<title>Simple notes from work and life, nothing fancy – Author</title>
+<title>On building multi-agent Blender scene genration system (Part 1) – Author</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,25 +25,23 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-listing/list.min.js"></script>
-<script src="site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-ea385d0e468b0dd5ea5bf0780b1290d9.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-4df3b0c4fafa0f66eafcead0ee6cff11.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-ea385d0e468b0dd5ea5bf0780b1290d9.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-4df3b0c4fafa0f66eafcead0ee6cff11.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -69,77 +69,19 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
 
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
 
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
-
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
-
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../styles.css">
 </head>
 
-<body class="nav-fixed quarto-light">
+<body class="nav-fixed fullcontent quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top quarto-banner">
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">Author</span>
     </a>
   </div>
@@ -150,7 +92,7 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
+    <a class="nav-link" href="../../about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
   <li class="nav-item compact">
@@ -168,103 +110,92 @@ window.Quarto = {
 <!-- content -->
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
-    <div class="quarto-title column-page-left">
-      <h1 class="title">Simple notes from work and life, nothing fancy</h1>
-                      </div>
+    <div class="quarto-title column-body">
+      <h1 class="title">On building multi-agent Blender scene genration system (Part 1)</h1>
+                                <div class="quarto-categories">
+                <div class="quarto-category">development_log</div>
+              </div>
+                  </div>
   </div>
     
   
-  <div class="quarto-title-meta column-page-left">
+  <div class="quarto-title-meta">
 
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>author </p>
+            </div>
+    </div>
       
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">August 24, 2025</p>
+      </div>
+    </div>
     
       
     </div>
     
   
-  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(2)</span></div><div class="category" data-category="YnVnX2xvZw==">bug_log <span class="quarto-category-count">(1)</span></div><div class="category" data-category="ZGV2ZWxvcG1lbnRfbG9n">development_log <span class="quarto-category-count">(1)</span></div></div></div>
+    
 <!-- main -->
-<main class="content quarto-banner-title-block column-page-left" id="quarto-document-content">
+<main class="content quarto-banner-title-block" id="quarto-document-content">
 
 
 
 
 
+<p><img src="https://www.blender.org/wp-content/uploads/2025/03/splash.webp" class="img-fluid"></p>
+<p>Repository URL: <a href="https://github.com/author31/multi-agent-scene-simulator">multi-agent-scene-simulator</a></p>
+<p>Inspired by the blog post <a href="https://www.anthropic.com/engineering/multi-agent-research-system">“How We Built Our Multi-Agent Research System”</a>, this project explores a similar agentic architecture. A <strong>lead agent</strong> breaks down user requirements into sub-tasks, while <strong>search sub-agents</strong> work on these sub-tasks. In this design, each sub-agent is constrained to operate within its specific task scope. In Anthropic’s multi-agent research, for example, sub-agents are only capable of browsing the internet.</p>
+<p>I decided to apply this design to a different domain: <strong>Blender scene generation</strong>.</p>
+<p><strong>Tech stack involved</strong>:</p>
+<ul>
+<li><strong>blender-mcp</strong> – Enables communication between agents and Blender</li>
+<li><strong>DSPy</strong> – Helps systematically optimize agents</li>
+</ul>
+<hr>
+<section id="design-implemented-at-agentic-layer" class="level2">
+<h2 class="anchored" data-anchor-id="design-implemented-at-agentic-layer">Design: Implemented at “agentic” layer</h2>
+<ol type="1">
+<li><strong>Lead Agent</strong> (<code>lead_agent.py</code>): Decomposes scene requirements into sub-tasks</li>
+<li><strong>Blender Code Generator</strong> (<code>blender_code_generator.py</code>): Converts natural language instructions into Python code</li>
+<li><strong>Scene Evaluator</strong> (<code>scene_evaluator.py</code>): Assesses scene quality and identifies missing components</li>
+</ol>
+<hr>
+</section>
+<section id="execution-flow" class="level2">
+<h2 class="anchored" data-anchor-id="execution-flow">Execution flow</h2>
+<p>Agentic execution logic is handled by “services” layer (services/executor.py)<br>
+Context Manager is responsible for storing agent’s execution traces such as tooling results, generated subtasks, generated code, etc.</p>
+</section>
+<section id="lead-agent-prompt-optimization-process" class="level2">
+<h2 class="anchored" data-anchor-id="lead-agent-prompt-optimization-process">Lead agent prompt optimization process</h2>
+<ul>
+<li><strong>Scene description sources:</strong> Crawled from <a href="https://blenderkit.com">blenderkit.com</a></li>
+<li><strong>LLM as a judge:</strong> Uses LLMs capable of image recognition to return a <strong>prompt-image match score</strong> (range: <code>0</code> = not a match, <code>1</code> = perfect match).</li>
+</ul>
+</section>
+<section id="thoughts" class="level2">
+<h2 class="anchored" data-anchor-id="thoughts">Thoughts</h2>
+<section id="inconsistent-scene-generation" class="level3">
+<h3 class="anchored" data-anchor-id="inconsistent-scene-generation">Inconsistent scene generation</h3>
+<p>The existing implementation of <code>executor</code>’s feedback loop is insufficient to have subagents had proper context of the whole execution flow. I’m defining a sufficient feedbackloop should be contains all traces of agents, tool execution results AND current environemnt state.</p>
+</section>
+<section id="optimization-issue" class="level3">
+<h3 class="anchored" data-anchor-id="optimization-issue">Optimization Issue</h3>
+<p>DSPy’s optimizers currently work only on a <strong>single module</strong>. However, in a multi-agent setup, this approach is hard to adapt because our primary goal is to optimize only the <strong>lead agent</strong>, whose responsibility is breaking down scene requirements into sub-tasks. The code generator sub-agents, on the other hand, simply act as “soldiers,” executing the task of generating code without requiring optimization.</p>
 
 
+</section>
+</section>
 
-
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="ZGV2ZWxvcG1lbnRfbG9n" data-listing-date-sort="1755993600000" data-listing-file-modified-sort="1756045375022" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="2" data-listing-word-count-sort="286">
-<div class="thumbnail"><a href="./posts/20205-08-24-Multi-agent-blender-scene-generator/index.html" class="no-external">
-
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/20205-08-24-Multi-agent-blender-scene-generator/index.html" class="no-external">On building multi-agent Blender scene genration system (Part 1)</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('ZGV2ZWxvcG1lbnRfbG9n'); return false;">development_log</div>
-
-</div>
-<div class="delink listing-description"><a href="./posts/20205-08-24-Multi-agent-blender-scene-generator/index.html" class="no-external">
-Repository URL: multi-agent-scene-simulator
-</a></div>
-</div>
-<div class="metadata">
-<a href="./posts/20205-08-24-Multi-agent-blender-scene-generator/index.html" class="no-external">
-<div class="listing-date">
-Aug 24, 2025
-</div>
-<div class="listing-author">
-author
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-categories="YnVnX2xvZw==" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1756045375022" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="417">
-<div class="thumbnail"><a href="./posts/2025-08-17-Segmentation-fault-caught/index.html" class="no-external">
-
-<p class="card-img-top"><img src="posts/2025-08-17-Segmentation-fault-caught/franka_robotic_arm.jpeg"  class="thumbnail-image card-img"/></p>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/2025-08-17-Segmentation-fault-caught/index.html" class="no-external">Isaac Gym Segmentation Fault</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('YnVnX2xvZw=='); return false;">bug_log</div>
-
-</div>
-<div class="delink listing-description"><a href="./posts/2025-08-17-Segmentation-fault-caught/index.html" class="no-external">
-<strong>Description</strong>: Segmentation fault caught when launching Isaac Gym inside docker container<br>
-The reason of segmentation fault is the container could not use the RTX graphic card…<br><br>
-</a></div>
-</div>
-<div class="metadata">
-<a href="./posts/2025-08-17-Segmentation-fault-caught/index.html" class="no-external">
-<div class="listing-date">
-Aug 17, 2025
-</div>
-<div class="listing-author">
-author
-</div>
-</a>
-</div>
-</div>
-</div>
-<div class="listing-no-matching d-none">No matching items</div>
-</div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

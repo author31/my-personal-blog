@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Simple notes from work and life, nothing fancy",
     "section": "",
-    "text": "Isaac Gym Segmentation Fault\n\n\n\nbug_log\n\n\n\n\n\n\n\n\n\nAug 17, 2025\n\n\nauthor\n\n\n\n\n\nNo matching items"
+    "text": "On building multi-agent Blender scene genration system (Part 1)\n\n\n\ndevelopment_log\n\n\n\n\n\n\n\n\n\nAug 24, 2025\n\n\nauthor\n\n\n\n\n\n\n\n\n\n\n\n\nIsaac Gym Segmentation Fault\n\n\n\nbug_log\n\n\n\n\n\n\n\n\n\nAug 17, 2025\n\n\nauthor\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "posts/2025-08-17-Segmentation-fault-caught/index.html",
@@ -12,6 +12,41 @@
     "title": "Isaac Gym Segmentation Fault",
     "section": "",
     "text": "Description: Segmentation fault caught when launching Isaac Gym inside docker container\nThe reason of segmentation fault is the container could not use the RTX graphic card to render led to segmentation fault when loading Isaac Gym’s viewer\nInspected log:\n\nCreating 36 environments\nAnimating DOF 0 ('abdomen_z')\nUnhandled descriptor set 433\nUnhandled descriptor set 414286096\nUnhandled descriptor set 431466320\nSegmentation fault (core dumped)\nInside the container, inspect the renderer\nvulkaninfo --json |grep \"deviceName\"\n\n# Output:\ndeviceName : llvmpipe (LLVM 12.0.0, 256 bits)   ⟵ software renderer\nllvmpipe means Vulkan has fallen back to CPU rasterization because it cannot find a valid NVIDIA driver.\n\nThe container cannot see NVIDIA’s Vulkan ICD manifest (nvidia_icd.json) and/or the matching driver libraries, so the Vulkan loader skips the GPU and uses the software fallback; Isaac Gym crashes when it tries to create GPU-only resources.\nCause: Incorrect mount command is -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0), see the following lines:\n#!/bin/bash\nset -e\nset -u\n\n# --- IMPORTANT ---\n# Replace :0 with the value you found in Step 1\nexport DISPLAY=:1\n\necho \"Setting display to $DISPLAY\"\n\n# Temporarily allow local connections from Docker to the X server\nxhost +local:\n\n# Run the Docker container\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all \\\n  -e DISPLAY=$DISPLAY \\\n  -v /tmp/.X11-unix:/tmp/.X11-unix \\\n  -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:/usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:ro \\ &lt;----- HERE\n  -v /usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:/usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:ro \\\n  -v .:/agentic_robot_assembly \\\n  --network=host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\n# Revert xhost settings\necho \"Restoring display access control\"\nxhost -local:\n\nIt was mounted incorrect nvidia driver version 550, this would fail if the host machine is using Nvidia driver version orther 550.\n\nSolution: Mount only the Vulkan ICD Here is the updated run.sh:\n\n#!/usr/bin/env bash\nset -euo pipefail\n\n: \"${DISPLAY:=:1}\"\nexport DISPLAY\necho \"[run.sh] DISPLAY=$DISPLAY\"\n\n###############################################################################\nif   [ -f /usr/share/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/usr/share/vulkan/icd.d\nelif [ -f /etc/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/etc/vulkan/icd.d\nelse\n      echo \"[run.sh] ERROR: nvidia_icd.json not found on host.\" &gt;&2\n      exit 1\nfi\necho \"[run.sh] Using Vulkan ICD dir $ICD_DIR\"\n\nVOLS=(-v /tmp/.X11-unix:/tmp/.X11-unix          # X socket\n      -v \"$ICD_DIR:$ICD_DIR:ro\"                # Vulkan ICD JSON\n      -v \"$(pwd)\":/agentic_robot_assembly)     # 專案\n\nENV_VARS=(-e DISPLAY=\"$DISPLAY\"\n          -e VK_ICD_FILENAMES=\"$ICD_DIR/nvidia_icd.json\")\n\nxhost +local: 1&gt;/dev/null\n\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all,graphics,display,utility,compute \\\n  \"${ENV_VARS[@]}\" \\\n  \"${VOLS[@]}\" \\\n  --network host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\nxhost -local: 1&gt;/dev/null"
+  },
+  {
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "",
+    "text": "Repository URL: multi-agent-scene-simulator\nInspired by the blog post “How We Built Our Multi-Agent Research System”, this project explores a similar agentic architecture. A lead agent breaks down user requirements into sub-tasks, while search sub-agents work on these sub-tasks. In this design, each sub-agent is constrained to operate within its specific task scope. In Anthropic’s multi-agent research, for example, sub-agents are only capable of browsing the internet.\nI decided to apply this design to a different domain: Blender scene generation.\nTech stack involved:"
+  },
+  {
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#design-implemented-at-agentic-layer",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#design-implemented-at-agentic-layer",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "Design: Implemented at “agentic” layer",
+    "text": "Design: Implemented at “agentic” layer\n\nLead Agent (lead_agent.py): Decomposes scene requirements into sub-tasks\nBlender Code Generator (blender_code_generator.py): Converts natural language instructions into Python code\nScene Evaluator (scene_evaluator.py): Assesses scene quality and identifies missing components"
+  },
+  {
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#execution-flow",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#execution-flow",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "Execution flow",
+    "text": "Execution flow\nAgentic execution logic is handled by “services” layer (services/executor.py)\nContext Manager is responsible for storing agent’s execution traces such as tooling results, generated subtasks, generated code, etc."
+  },
+  {
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#lead-agent-prompt-optimization-process",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#lead-agent-prompt-optimization-process",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "Lead agent prompt optimization process",
+    "text": "Lead agent prompt optimization process\n\nScene description sources: Crawled from blenderkit.com\nLLM as a judge: Uses LLMs capable of image recognition to return a prompt-image match score (range: 0 = not a match, 1 = perfect match)."
+  },
+  {
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#thoughts",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#thoughts",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "Thoughts",
+    "text": "Thoughts\n\nInconsistent scene generation\nThe existing implementation of executor’s feedback loop is insufficient to have subagents had proper context of the whole execution flow. I’m defining a sufficient feedbackloop should be contains all traces of agents, tool execution results AND current environemnt state.\n\n\nOptimization Issue\nDSPy’s optimizers currently work only on a single module. However, in a multi-agent setup, this approach is hard to adapt because our primary goal is to optimize only the lead agent, whose responsibility is breaking down scene requirements into sub-tasks. The code generator sub-agents, on the other hand, simply act as “soldiers,” executing the task of generating code without requiring optimization."
   },
   {
     "objectID": "about.html",
