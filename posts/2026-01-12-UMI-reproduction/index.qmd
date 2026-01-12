@@ -1,3 +1,10 @@
+---
+title: "UMI reproduction in IsaacSim"
+author: "author"
+date: "2026-01-12"
+categories: [development_log]
+
+---
 # UMI Reproduction
 
 # Goal
@@ -169,10 +176,10 @@ If we could ensure the observations consistency between real-world and simulatio
 
 # Recorded Demos (GIFs)
 Human expert demonstration
-![Human expert demonstration](posts/2026-01-12-UMI-reproduction/UMI_kitchen_collect.mp4.gif)
+![Human expert demonstration](UMI_kitchen_collect.mp4.gif)
 
 First attempt in IsaacSim
-![First attempt](posts/2026-01-12-UMI-reproduction/UMI_worklog_simulation_first_attempt.mp4.gif)
+![First attempt](UMI_worklog_simulation_first_attempt.mp4.gif)
 
 Trajectory successfully replayed but failed to grasp
-![Success demo](posts/2026-01-12-UMI-reproduction/sim_replay.gif)
+![Success demo](sim_replay.gif)

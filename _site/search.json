@@ -7,32 +7,137 @@
     "text": "I’m Author, an EECS student at National Yang Ming Chiao Tung University, working on robotics research in the HCIS lab. This blog is basically my notebook for work, ideas, and the occasional brain dump"
   },
   {
-    "objectID": "posts/welcome/index.html",
-    "href": "posts/welcome/index.html",
-    "title": "Isaac Gym Segmentation Fault",
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
     "section": "",
-    "text": "Description: Segmentation fault caught when launching Isaac Gym inside docker container\nThe reason of segmentation fault is the container could not use the RTX graphic card to render led to segmentation fault when loading Isaac Gym’s viewer\nInspected log:\n\nCreating 36 environments\nAnimating DOF 0 ('abdomen_z')\nUnhandled descriptor set 433\nUnhandled descriptor set 414286096\nUnhandled descriptor set 431466320\nSegmentation fault (core dumped)\nInside the container, inspect the renderer\nvulkaninfo --json |grep \"deviceName\"\n\n# Output:\ndeviceName : llvmpipe (LLVM 12.0.0, 256 bits)   ⟵ software renderer\nllvmpipe means Vulkan has fallen back to CPU rasterization because it cannot find a valid NVIDIA driver.\n\nThe container cannot see NVIDIA’s Vulkan ICD manifest (nvidia_icd.json) and/or the matching driver libraries, so the Vulkan loader skips the GPU and uses the software fallback; Isaac Gym crashes when it tries to create GPU-only resources.\nCause: Incorrect mount command is -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0), see the following lines:\n#!/bin/bash\nset -e\nset -u\n\n# --- IMPORTANT ---\n# Replace :0 with the value you found in Step 1\nexport DISPLAY=:1\n\necho \"Setting display to $DISPLAY\"\n\n# Temporarily allow local connections from Docker to the X server\nxhost +local:\n\n# Run the Docker container\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all \\\n  -e DISPLAY=$DISPLAY \\\n  -v /tmp/.X11-unix:/tmp/.X11-unix \\\n  -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:/usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:ro \\ &lt;----- HERE\n  -v /usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:/usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:ro \\\n  -v .:/agentic_robot_assembly \\\n  --network=host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\n# Revert xhost settings\necho \"Restoring display access control\"\nxhost -local:\n\nIt was mounted incorrect nvidia driver version 550, this would fail if the host machine is using Nvidia driver version orther 550.\n\nSolution: Mount only the Vulkan ICD Here is the updated run.sh:\n\n#!/usr/bin/env bash\nset -euo pipefail\n\n: \"${DISPLAY:=:1}\"\nexport DISPLAY\necho \"[run.sh] DISPLAY=$DISPLAY\"\n\n###############################################################################\nif   [ -f /usr/share/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/usr/share/vulkan/icd.d\nelif [ -f /etc/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/etc/vulkan/icd.d\nelse\n      echo \"[run.sh] ERROR: nvidia_icd.json not found on host.\" &gt;&2\n      exit 1\nfi\necho \"[run.sh] Using Vulkan ICD dir $ICD_DIR\"\n\nVOLS=(-v /tmp/.X11-unix:/tmp/.X11-unix          # X socket\n      -v \"$ICD_DIR:$ICD_DIR:ro\"                # Vulkan ICD JSON\n      -v \"$(pwd)\":/agentic_robot_assembly)     # 專案\n\nENV_VARS=(-e DISPLAY=\"$DISPLAY\"\n          -e VK_ICD_FILENAMES=\"$ICD_DIR/nvidia_icd.json\")\n\nxhost +local: 1&gt;/dev/null\n\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all,graphics,display,utility,compute \\\n  \"${ENV_VARS[@]}\" \\\n  \"${VOLS[@]}\" \\\n  --network host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\nxhost -local: 1&gt;/dev/null"
+    "text": "Repository URL: multi-agent-scene-simulator\nInspired by the blog post “How We Built Our Multi-Agent Research System”, this project explores a similar agentic architecture. A lead agent breaks down user requirements into sub-tasks, while search sub-agents work on these sub-tasks. In this design, each sub-agent is constrained to operate within its specific task scope. In Anthropic’s multi-agent research, for example, sub-agents are only capable of browsing the internet.\nI decided to apply this design to a different domain: Blender scene generation.\nTech stack involved:"
   },
   {
-    "objectID": "posts/post-with-code/index.html",
-    "href": "posts/post-with-code/index.html",
-    "title": "Post With Code",
-    "section": "",
-    "text": "This is a post with executable code."
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#design-implemented-at-agentic-layer",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#design-implemented-at-agentic-layer",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "Design: Implemented at “agentic” layer",
+    "text": "Design: Implemented at “agentic” layer\n\nLead Agent (lead_agent.py): Decomposes scene requirements into sub-tasks\nBlender Code Generator (blender_code_generator.py): Converts natural language instructions into Python code\nScene Evaluator (scene_evaluator.py): Assesses scene quality and identifies missing components"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Simple notes from work and life, nothing fancy",
-    "section": "",
-    "text": "Isaac Gym Segmentation Fault\n\n\n\nbug_log\n\n\n\n\n\n\n\n\n\nAug 17, 2025\n\n\nauthor\n\n\n\n\n\nNo matching items"
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#execution-flow",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#execution-flow",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "Execution flow",
+    "text": "Execution flow\nAgentic execution logic is handled by “services” layer (services/executor.py)\nContext Manager is responsible for storing agent’s execution traces such as tooling results, generated subtasks, generated code, etc."
   },
   {
-    "objectID": "posts/welcome/index.html#adsasd",
-    "href": "posts/welcome/index.html#adsasd",
-    "title": "Welcome To My Blog",
-    "section": "",
-    "text": "This is the first post in a Quarto blog. Welcome!\n\nSince this post doesn’t specify an explicit image, the first image in the post will be used in the listing page of posts."
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#lead-agent-prompt-optimization-process",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#lead-agent-prompt-optimization-process",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "Lead agent prompt optimization process",
+    "text": "Lead agent prompt optimization process\n\nScene description sources: Crawled from blenderkit.com\nLLM as a judge: Uses LLMs capable of image recognition to return a prompt-image match score (range: 0 = not a match, 1 = perfect match)."
+  },
+  {
+    "objectID": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#thoughts",
+    "href": "posts/20205-08-24-Multi-agent-blender-scene-generator/index.html#thoughts",
+    "title": "On building multi-agent Blender scene genration system (Part 1)",
+    "section": "Thoughts",
+    "text": "Thoughts\n\nInconsistent scene generation\nThe existing implementation of executor’s feedback loop is insufficient to have subagents had proper context of the whole execution flow. I’m defining a sufficient feedbackloop should be contains all traces of agents, tool execution results AND current environemnt state.\n\n\nOptimization Issue\nDSPy’s optimizers currently work only on a single module. However, in a multi-agent setup, this approach is hard to adapt because our primary goal is to optimize only the lead agent, whose responsibility is breaking down scene requirements into sub-tasks. The code generator sub-agents, on the other hand, simply act as “soldiers,” executing the task of generating code without requiring optimization."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#challenges",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#challenges",
+    "title": "UMI Reproduction",
+    "section": "Challenges",
+    "text": "Challenges\n\nOfficial implementation doesn’t support latest GoPro13 devices:\n\nGoPro13 latest format causing official IMU extraction failure.\n\nIn-accurate intrinsics, extrinsics, noise parameters causing SLAM failure.\n\nThe business logic is currently hard-coded exclusively for the GoPro9.\n\n\nIsaacSim V5.1.0 integration, to validate the collected data, trained policy, inferencing stacks right in the simulator.\n\nValidate the collected data: Replay the extracted trajectories right in the simulator ( where should this section be?)\n\n\nTrain a policy model on cutting-task\n\nDesign a task-specific collection device for such cutting tasks, relies on CORE."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#gopro13-latest-format-causing-official-imu-extraction-failure",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#gopro13-latest-format-causing-official-imu-extraction-failure",
+    "title": "UMI Reproduction",
+    "section": "GoPro13 latest format causing official IMU extraction failure",
+    "text": "GoPro13 latest format causing official IMU extraction failure\n\nIntegrated latest sensor data extraction library."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#in-accurate-intrinsics-extrinsics-noise-parameters-causing-slam-failure",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#in-accurate-intrinsics-extrinsics-noise-parameters-causing-slam-failure",
+    "title": "UMI Reproduction",
+    "section": "In-accurate intrinsics, extrinsics, noise parameters causing SLAM failure",
+    "text": "In-accurate intrinsics, extrinsics, noise parameters causing SLAM failure\n\nCalibrated GoPro13 to obtains the following values:\n\nCamera intrinsics parameters\n\nIMU noise calibration\n\nIMU frequency"
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#the-business-logic-is-currently-hard-coded-exclusively-for-the-gopro9.",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#the-business-logic-is-currently-hard-coded-exclusively-for-the-gopro9.",
+    "title": "UMI Reproduction",
+    "section": "The business logic is currently hard-coded exclusively for the GoPro9.",
+    "text": "The business logic is currently hard-coded exclusively for the GoPro9.\n\nRe-implemented UMI processing pipeline in a separate repository, voilab, contains:\n\nThe new UMI implementation is designed for extensibility, enabling flexible integration of new processing logic such as alternative SLAM or others.\n\nData visualization tools\n\nURDF viewer\n\n\nMore on the new design of the UMI pipeline. A YAML-based pipeline configuration, each stage corresponding to a service such as SLAM, Aruco detection service, etc. This design enables the ease of extension as discussed above. For example, the current SLAM service is based on the implementation ORB_SLAM3, we could easily swap for other SLAM method such as Realsense T265 built-in Visual SLAM."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#isaacsim-v5.1.0-integration-to-validate-the-collected-data-trained-policy-inferencing-stacks-right-in-the-simulator.",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#isaacsim-v5.1.0-integration-to-validate-the-collected-data-trained-policy-inferencing-stacks-right-in-the-simulator.",
+    "title": "UMI Reproduction",
+    "section": "IsaacSim V5.1.0 integration, to validate the collected data, trained policy, inferencing stacks right in the simulator.",
+    "text": "IsaacSim V5.1.0 integration, to validate the collected data, trained policy, inferencing stacks right in the simulator.\n\nContainerized IsaacSim V5.1.0 into the repository allowing ease of installation, development.\n\nIntegrated ROS2, the goal is to streamline the policy deployment on simulation and real-world environments. It comes with a cost, which will be discussed later in the “Technical debt” section.\n\n\nHow does ROS help reduce the deployment and maintenance efforts?\nClaim: Streamlining the deployment process can help reduce the development and maintenance effort.\nIsaac Sim v5.1.0 provides native ROS 2 support, enabling seamless communication with the simulator. This allows the inference stack to be shared between the simulation and real-world deployments.\n\nBe able to test and iterate the inference pipeline in the simulation environment, then deploy directly to real hardware.\n\n\n\nIsaacSim’s action graph utilization\nIsaacSim supports ROS2 natively via the “Action Graph” layer. This is a place to define a graph containing nodes that publishes sensor information or subscribes to certain ROS topics and acts upon the received commands. In the example of controlling the robotic arm, certain nodes are needed:\n\nA subscriber node: subscribes to a topic of joint positions\n\nA controller node: controls the robotic arm by joint positions commands\n\nSuch design could help future robotic arm swapping easily without being bound by any components.\n\n\nReal-world trajectory replay inside IsaacSim simulator\nAt the start of the human demonstration collection stage of the UMI method, a world-coordinate calibration is needed, which is recording an Aruco tag placed on the surface which is treated as world coordinate in upcoming human demonstration trajectories recording. UMI pipeline would later transform extracted trajectories from ORB_SLAM3 to this tag frame. To replay it, we must transform all waypoints from that Aruco tag frame to the simulation world frame.\n\nImplementation details:\nAll waypoints of each trajectory are end-effector pose, to have the robotic arm in the simulation replayed such waypoints, there are few processing steps to follow:\n\nTransform waypoints from original tag-frame to simulation world frame\n\nConvert waypoints in end-effector pose to joint positions which eventually moves the robotic arm.\n\nIsaacSim built-in ArticulationKinematicsSolver was used\n\n\n\n\n\nVersion control for simulation assets.\nGit was employed in order to manage the version of simulation assets enabling the ease of collaboration work across a team."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#grasping-failure-in-the-simulation-environment",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#grasping-failure-in-the-simulation-environment",
+    "title": "UMI Reproduction",
+    "section": "Grasping failure in the simulation environment",
+    "text": "Grasping failure in the simulation environment\nThe robotic arm was unable to grasp the objects in the simulation environment while replaying the collected trajectories in the real-world environment. There is an on-going investigation on this issue, the followings were tried but didn’t have effects.\n\nConfigure the franka-grippers and objects with rigid body and collider\n\nReplaced the UMI-gripper Franka with the official one but the grasping issue wasn’t resolved"
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#trajectory-intervention",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#trajectory-intervention",
+    "title": "UMI Reproduction",
+    "section": "Trajectory intervention",
+    "text": "Trajectory intervention\nThere are certain biases in object reconstructions, trajectories extraction from SLAM. These accumulated biases led to inaccurate robotic arm movements. To mitigate this issue, an intervention methodology was employed. The idea was to intercept the original trajectory when certain conditions were met, close to objects, the gripper width was in a certain range, etc. However, this intervention could potentially disrespect the real-world trajectory. Taking the cup-stacking as an example, the human-expert was intended to present certain failures before actually grasping the cup. This intervention method patches those failures with the synthetic, ad-hoc trajectory. Eventually, this type of method just broadens the sim-real gap rather than solving the issue as it was originally designed. We shouldn’t solve the problem at this layer but from the very first principle, detect and eliminate those biases."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#technical-debts",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#technical-debts",
+    "title": "UMI Reproduction",
+    "section": "Technical Debts",
+    "text": "Technical Debts\n\nGrasping Workarounds and Limitations\nThe existing implementation contains a temporary grasping workaround that introduces technical debt in the system. Because the robotic arm is unable to consistently achieve a stable physical grasp, the object is artificially constrained to the gripper through a multi-step procedure during motion execution. This mechanism facilitates simulation replay but violates physical realism, causing the approach to fail when applied at policy inference time."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#future-works",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#future-works",
+    "title": "UMI Reproduction",
+    "section": "Future Works",
+    "text": "Future Works\n\nResolve the grasping failure\n\nBuild visualization tools around the UMI pipeline for sanity checks purposes, allowing us to eliminate biases from the early stage."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#why-not-use-isaaclab",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#why-not-use-isaaclab",
+    "title": "UMI Reproduction",
+    "section": "Why not use IsaacLab?",
+    "text": "Why not use IsaacLab?\nIsaacLab offers higher-level APIs, workflows, and robotics-oriented abstractions intended to simplify robot configuration, environment definition, and the execution of learning algorithms. In this project, however, these abstractions are unnecessary, as the required functionality is limited to the core simulation environment. Dynamic environment setup is already addressed through base environment initialization and a registry-based design, making the additional IsaacLab abstraction layer redundant for our use case."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#how-did-the-clunky-arm-movements-issue-get-solved",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#how-did-the-clunky-arm-movements-issue-get-solved",
+    "title": "UMI Reproduction",
+    "section": "How did the clunky arm movements issue get solved?",
+    "text": "How did the clunky arm movements issue get solved?\nThis issue occurred due to the under-tuned physical properties for the Franka asset, such as damping, stiffness, and target positions of each joint at stand-by mode."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#docker-based-slam-processing",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#docker-based-slam-processing",
+    "title": "UMI Reproduction",
+    "section": "Docker-based SLAM processing",
+    "text": "Docker-based SLAM processing\nUMI relies on the ORB-SLAM3 visual SLAM algorithm for trajectory extraction. Since ORB-SLAM3 is a C++ project requiring independent build and compilation steps, a quick and dirty workaround was implemented by containerizing the algorithm and invoking it via subprocess calls from a service layer. This approach complicates debugging and long-term maintenance and is therefore suboptimal for a Python-centric codebase. Future work will focus on integrating ORB-SLAM3 through native bindings."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#real-world-inference-stack",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#real-world-inference-stack",
+    "title": "UMI Reproduction",
+    "section": "Real-world inference stack",
+    "text": "Real-world inference stack\nOne of the downsides of GoPro devices is not supporting real-time video streaming, a crucial feature to enable policy model deployment in the real-world. The UMI official states that using an external video-stream capture card + GoPro media mods could help solve the issue."
+  },
+  {
+    "objectID": "posts/2026-01-12-UMI-reproduction/index.html#ik-solvers-selection",
+    "href": "posts/2026-01-12-UMI-reproduction/index.html#ik-solvers-selection",
+    "title": "UMI Reproduction",
+    "section": "IK solvers selection",
+    "text": "IK solvers selection\nMany existing Inverse Kinematics (IK) solvers present significant challenges for software deployment, often requiring operating system-level dependencies or being tightly integrated with the ROS ecosystem. This approach is problematic because it leads to bloated Docker containers, complex dependency management, and unpredictable behavior across different operating systems. We ended up using IsaacSim built-in IK solver, ArticulationKinematicsSolver.\nWe evaluated several IK solvers, with the following results:\n\n\n\n\n\n\n\nSolver\nNotes\n\n\n\n\ncuRobo\nDocker installation proved to be a major hurdle, resulting in an excessively large container.\n\n\nIkpy\nEase of installation due to its management via pip.\n\n\nMoveit2\nIts ROS-bound installation created conflicts with our custom-built ROS2 version within IsaacSim, leading to another significant deployment issue."
   },
   {
     "objectID": "posts/2025-08-17-Segmentation-fault-caught/index.html",
@@ -40,5 +145,12 @@
     "title": "Isaac Gym Segmentation Fault",
     "section": "",
     "text": "Description: Segmentation fault caught when launching Isaac Gym inside docker container\nThe reason of segmentation fault is the container could not use the RTX graphic card to render led to segmentation fault when loading Isaac Gym’s viewer\nInspected log:\n\nCreating 36 environments\nAnimating DOF 0 ('abdomen_z')\nUnhandled descriptor set 433\nUnhandled descriptor set 414286096\nUnhandled descriptor set 431466320\nSegmentation fault (core dumped)\nInside the container, inspect the renderer\nvulkaninfo --json |grep \"deviceName\"\n\n# Output:\ndeviceName : llvmpipe (LLVM 12.0.0, 256 bits)   ⟵ software renderer\nllvmpipe means Vulkan has fallen back to CPU rasterization because it cannot find a valid NVIDIA driver.\n\nThe container cannot see NVIDIA’s Vulkan ICD manifest (nvidia_icd.json) and/or the matching driver libraries, so the Vulkan loader skips the GPU and uses the software fallback; Isaac Gym crashes when it tries to create GPU-only resources.\nCause: Incorrect mount command is -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0), see the following lines:\n#!/bin/bash\nset -e\nset -u\n\n# --- IMPORTANT ---\n# Replace :0 with the value you found in Step 1\nexport DISPLAY=:1\n\necho \"Setting display to $DISPLAY\"\n\n# Temporarily allow local connections from Docker to the X server\nxhost +local:\n\n# Run the Docker container\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all \\\n  -e DISPLAY=$DISPLAY \\\n  -v /tmp/.X11-unix:/tmp/.X11-unix \\\n  -v /usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:/usr/lib/x86_64-linux-gnu/libnvidia-gl-550.so.0:ro \\ &lt;----- HERE\n  -v /usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:/usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0:ro \\\n  -v .:/agentic_robot_assembly \\\n  --network=host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\n# Revert xhost settings\necho \"Restoring display access control\"\nxhost -local:\n\nIt was mounted incorrect nvidia driver version 550, this would fail if the host machine is using Nvidia driver version orther 550.\n\nSolution: Mount only the Vulkan ICD Here is the updated run.sh:\n\n#!/usr/bin/env bash\nset -euo pipefail\n\n: \"${DISPLAY:=:1}\"\nexport DISPLAY\necho \"[run.sh] DISPLAY=$DISPLAY\"\n\n###############################################################################\nif   [ -f /usr/share/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/usr/share/vulkan/icd.d\nelif [ -f /etc/vulkan/icd.d/nvidia_icd.json ]; then\n      ICD_DIR=/etc/vulkan/icd.d\nelse\n      echo \"[run.sh] ERROR: nvidia_icd.json not found on host.\" &gt;&2\n      exit 1\nfi\necho \"[run.sh] Using Vulkan ICD dir $ICD_DIR\"\n\nVOLS=(-v /tmp/.X11-unix:/tmp/.X11-unix          # X socket\n      -v \"$ICD_DIR:$ICD_DIR:ro\"                # Vulkan ICD JSON\n      -v \"$(pwd)\":/agentic_robot_assembly)     # 專案\n\nENV_VARS=(-e DISPLAY=\"$DISPLAY\"\n          -e VK_ICD_FILENAMES=\"$ICD_DIR/nvidia_icd.json\")\n\nxhost +local: 1&gt;/dev/null\n\ndocker run -it --rm \\\n  --gpus all \\\n  -e NVIDIA_DRIVER_CAPABILITIES=all,graphics,display,utility,compute \\\n  \"${ENV_VARS[@]}\" \\\n  \"${VOLS[@]}\" \\\n  --network host \\\n  --name isaacgym_container \\\n  isaacgym:py38-cuda \\\n  /bin/bash\n\nxhost -local: 1&gt;/dev/null"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Simple notes from work and life, nothing fancy",
+    "section": "",
+    "text": "UMI Reproduction\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOn building multi-agent Blender scene genration system (Part 1)\n\n\n\ndevelopment_log\n\n\n\n\n\n\n\n\n\nAug 24, 2025\n\n\nauthor\n\n\n\n\n\n\n\n\n\n\n\n\nIsaac Gym Segmentation Fault\n\n\n\nbug_log\n\n\n\n\n\n\n\n\n\nAug 17, 2025\n\n\nauthor\n\n\n\n\n\nNo matching items"
   }
 ]
